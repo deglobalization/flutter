@@ -14,6 +14,8 @@ class CardModel {
 }
 
 class PageViewApp extends StatefulWidget {
+  const PageViewApp({Key key}) : super(key: key);
+
   @override
   PageViewAppState createState() => PageViewAppState();
 }
@@ -119,9 +121,9 @@ class PageViewAppState extends State<PageViewApp> {
 
   Widget _buildBody(BuildContext context) {
     return PageView(
-      children: cardModels.map<Widget>(buildCard).toList(),
       // TODO(abarth): itemsWrap: itemsWrap,
       scrollDirection: scrollDirection,
+      children: cardModels.map<Widget>(buildCard).toList(),
     );
   }
 
@@ -139,13 +141,10 @@ class PageViewAppState extends State<PageViewApp> {
 }
 
 void main() {
-  runApp(MaterialApp(
-    title: 'PageView',
-    theme: ThemeData(
-      brightness: Brightness.light,
-      primarySwatch: Colors.blue,
-      accentColor: Colors.redAccent,
+  runApp(
+    const MaterialApp(
+      title: 'PageView',
+      home: PageViewApp(),
     ),
-    home: PageViewApp(),
-  ));
+  );
 }

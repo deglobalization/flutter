@@ -74,14 +74,17 @@ void main() {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: <Widget>[
-              Focus(focusNode: focusNode1, child: Container(width: 200, height: 100),),
+              Focus(
+                focusNode: focusNode1,
+                child: const SizedBox(width: 200, height: 100),
+              ),
               Transform.translate(
                 offset: const Offset(10, 20),
                 child: Transform.scale(
                   scale: 0.33,
                   child: Transform.rotate(
                     angle: math.pi,
-                    child: Focus(focusNode: focusNode2, child: Container(width: 200, height: 100)),
+                    child: Focus(focusNode: focusNode2, child: const SizedBox(width: 200, height: 100)),
                   ),
                 ),
               ),
@@ -1026,7 +1029,7 @@ void main() {
         'descendantsAreFocusable: true',
         'canRequestFocus: true',
         'hasFocus: false',
-        'hasPrimaryFocus: false'
+        'hasPrimaryFocus: false',
       ]);
     });
 
@@ -1096,8 +1099,9 @@ void main() {
           '       │\n'
           '       └─Child 2: FocusNode#00000(Child 4 [PRIMARY FOCUS])\n'
           '           context: Container-[GlobalKey#00000]\n'
-          '           PRIMARY FOCUS\n'
-        ));
+          '           PRIMARY FOCUS\n',
+        ),
+      );
     });
   });
 

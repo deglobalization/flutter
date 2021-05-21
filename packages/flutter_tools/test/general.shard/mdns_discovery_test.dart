@@ -7,7 +7,7 @@
 import 'package:flutter_tools/src/base/io.dart';
 import 'package:flutter_tools/src/base/logger.dart';
 import 'package:flutter_tools/src/build_info.dart';
-import 'package:flutter_tools/src/device.dart';
+import 'package:flutter_tools/src/device_port_forwarder.dart';
 import 'package:flutter_tools/src/ios/devices.dart';
 import 'package:flutter_tools/src/mdns_discovery.dart';
 import 'package:flutter_tools/src/project.dart';
@@ -213,8 +213,8 @@ void main() {
         flutterUsage: TestUsage(),
       );
       expect(
-        () async => await portDiscovery.query(),
-        throwsA(isA<Exception>()),
+        () async => portDiscovery.query(),
+        throwsException,
       );
     });
 

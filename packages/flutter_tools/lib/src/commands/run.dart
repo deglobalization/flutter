@@ -12,7 +12,6 @@ import 'package:vm_service/vm_service.dart';
 import '../android/android_device.dart';
 import '../base/common.dart';
 import '../base/file_system.dart';
-import '../base/io.dart';
 import '../base/utils.dart';
 import '../build_info.dart';
 import '../device.dart';
@@ -37,10 +36,14 @@ abstract class RunCommandBase extends FlutterCommand with DeviceBasedDevelopment
     usesFlavorOption();
     usesWebRendererOption();
     addNativeNullAssertions(hide: !verboseHelp);
+    addBundleSkSLPathOption(hide: !verboseHelp);
     argParser
       ..addFlag('trace-startup',
         negatable: false,
-        help: 'Trace application startup, then exit, saving the trace to a file.',
+        help: 'Trace application startup, then exit, saving the trace to a file. '
+              'By default, this will be saved in the "build" directory. If the '
+              'FLUTTER_TEST_OUTPUTS_DIR environment variable is set, the file '
+              'will be written there instead.',
       )
       ..addFlag('verbose-system-logs',
         negatable: false,
@@ -178,6 +181,7 @@ abstract class RunCommandBase extends FlutterCommand with DeviceBasedDevelopment
         port: featureFlags.isWebEnabled ? stringArg('web-port') : '',
         webUseSseForDebugProxy: featureFlags.isWebEnabled && stringArg('web-server-debug-protocol') == 'sse',
         webUseSseForDebugBackend: featureFlags.isWebEnabled && stringArg('web-server-debug-backend-protocol') == 'sse',
+        webUseSseForInjectedClient: featureFlags.isWebEnabled && stringArg('web-server-debug-injected-client-protocol') == 'sse',
         webEnableExposeUrl: featureFlags.isWebEnabled && boolArg('web-allow-expose-url'),
         webRunHeadless: featureFlags.isWebEnabled && boolArg('web-run-headless'),
         webBrowserDebugPort: browserDebugPort,
@@ -187,7 +191,7 @@ abstract class RunCommandBase extends FlutterCommand with DeviceBasedDevelopment
         buildInfo,
         startPaused: boolArg('start-paused'),
         disableServiceAuthCodes: boolArg('disable-service-auth-codes'),
-        disableDds: boolArg('disable-dds'),
+        enableDds: enableDds,
         dartEntrypointArgs: stringsArg('dart-entrypoint-args'),
         dartFlags: stringArg('dart-flags') ?? '',
         useTestFonts: argParser.options.containsKey('use-test-fonts') && boolArg('use-test-fonts'),
@@ -210,6 +214,7 @@ abstract class RunCommandBase extends FlutterCommand with DeviceBasedDevelopment
         port: featureFlags.isWebEnabled ? stringArg('web-port') : '',
         webUseSseForDebugProxy: featureFlags.isWebEnabled && stringArg('web-server-debug-protocol') == 'sse',
         webUseSseForDebugBackend: featureFlags.isWebEnabled && stringArg('web-server-debug-backend-protocol') == 'sse',
+        webUseSseForInjectedClient: featureFlags.isWebEnabled && stringArg('web-server-debug-injected-client-protocol') == 'sse',
         webEnableExposeUrl: featureFlags.isWebEnabled && boolArg('web-allow-expose-url'),
         webRunHeadless: featureFlags.isWebEnabled && boolArg('web-run-headless'),
         webBrowserDebugPort: browserDebugPort,
@@ -256,7 +261,7 @@ class RunCommand extends RunCommandBase {
               'or just dump the trace as soon as the application is running. The first frame '
               'is detected by looking for a Timeline event with the name '
               '"${Tracing.firstUsefulFrameEventName}". '
-              'By default, the widgets library\'s binding takes care of sending this event.',
+              "By default, the widgets library's binding takes care of sending this event.",
       )
       ..addFlag('use-test-fonts',
         negatable: true,
@@ -352,7 +357,7 @@ class RunCommand extends RunCommandBase {
   }
 
   @override
-  Future<Map<CustomDimensions, String>> get usageValues async {
+  Future<CustomDimensions> get usageValues async {
     String deviceType, deviceOsVersion;
     bool isEmulator;
     bool anyAndroidDevices = false;
@@ -405,16 +410,15 @@ class RunCommand extends RunCommandBase {
 
     final BuildInfo buildInfo = await getBuildInfo();
     final String modeName = buildInfo.modeName;
-    return <CustomDimensions, String>{
-      CustomDimensions.commandRunIsEmulator: '$isEmulator',
-      CustomDimensions.commandRunTargetName: deviceType,
-      CustomDimensions.commandRunTargetOsVersion: deviceOsVersion,
-      CustomDimensions.commandRunModeName: modeName,
-      CustomDimensions.commandRunProjectModule: '${FlutterProject.current().isModule}',
-      CustomDimensions.commandRunProjectHostLanguage: hostLanguage.join(','),
-      if (androidEmbeddingVersion != null)
-        CustomDimensions.commandRunAndroidEmbeddingVersion: androidEmbeddingVersion,
-    };
+    return CustomDimensions(
+      commandRunIsEmulator: isEmulator,
+      commandRunTargetName: deviceType,
+      commandRunTargetOsVersion: deviceOsVersion,
+      commandRunModeName: modeName,
+      commandRunProjectModule: FlutterProject.current().isModule,
+      commandRunProjectHostLanguage: hostLanguage.join(','),
+      commandRunAndroidEmbeddingVersion: androidEmbeddingVersion,
+    );
   }
 
   @override
@@ -495,6 +499,10 @@ class RunCommand extends RunCommandBase {
         debuggingOptions: await createDebuggingOptions(webMode),
         stayResident: stayResident,
         urlTunneller: null,
+        fileSystem: globals.fs,
+        usage: globals.flutterUsage,
+        logger: globals.logger,
+        systemClock: globals.systemClock,
       );
     }
     return ColdRunner(
@@ -635,7 +643,7 @@ class RunCommand extends RunCommandBase {
             logger: globals.logger,
             terminal: globals.terminal,
             signals: globals.signals,
-            processInfo: processInfo,
+            processInfo: globals.processInfo,
             reportReady: boolArg('report-ready'),
             pidFile: stringArg('pid-file'),
           )

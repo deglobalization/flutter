@@ -4,11 +4,11 @@
 
 import 'dart:ui';
 
-import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import '../rendering/mock_canvas.dart';
 import '../widgets/semantics_tester.dart';
@@ -857,7 +857,7 @@ void main() {
     // keep holding the long press, should still show tooltip
     await tester.pump(kLongPressTimeout);
     expect(find.text(tooltipText), findsOneWidget);
-    gesture.up();
+    await gesture.up();
   });
 
   testWidgets('Tooltip shows/hides when hovered', (WidgetTester tester) async {
@@ -1061,7 +1061,7 @@ void main() {
                       ),
                     ),
                   );
-                }
+                },
               );
             },
           ),
@@ -1159,8 +1159,8 @@ void main() {
         home: Center(
           child: Tooltip(
             message: 'Foo',
-            child: Text('Bar'),
             excludeFromSemantics: true,
+            child: Text('Bar'),
           ),
         ),
       ),
@@ -1235,7 +1235,7 @@ void main() {
   testWidgets('default Tooltip debugFillProperties', (WidgetTester tester) async {
     final DiagnosticPropertiesBuilder builder = DiagnosticPropertiesBuilder();
 
-    const Tooltip(message: 'message',).debugFillProperties(builder);
+    const Tooltip(message: 'message').debugFillProperties(builder);
 
     final List<String> description = builder.properties
       .where((DiagnosticsNode node) => !node.isFiltered(DiagnosticLevel.info))
